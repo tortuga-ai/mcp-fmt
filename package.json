@@ -1,0 +1,33 @@
+{
+  "name": "mcp-fmt",
+  "version": "0.1.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "description": "Format MCP tool results into markdown that renders in Claude Code's terminal",
+  "keywords": ["mcp", "markdown", "terminal", "claude", "formatting"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tortuga-ai/mcp-fmt.git"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "bun build ./src/index.ts --outdir ./dist --target node && tsc -p tsconfig.build.json",
+    "test": "bun test",
+    "example": "bun run examples/basic.ts"
+  },
+  "type": "module",
+  "types": "./dist/index.d.ts"
+}

@@ -1,0 +1,8 @@
+CLAUDE.md
+.cursor/
+examples/
+tests/
+*.tsbuildinfo
+coverage/
+*.lcov
+.env*
