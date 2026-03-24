@@ -15,7 +15,7 @@
  * Then ask your AI: "call the preview tool"
  */
 
-import { table, list, nestedList, codeBlock, section, bold, italic, header, keyValue, statusBadge, priorityBadge, healthBadge, typeBadge, assignmentBadge } from '../src/index'
+import { table, list, nestedList, codeBlock, section, bold, italic, header, keyValue, statusBadge, priorityBadge, healthBadge, typeBadge, assignmentBadge, response } from '../src/index'
 
 const output = [
   header('mcp-fmt Examples', 1),
@@ -157,9 +157,7 @@ const handleMessage = (msg: any) => {
       }],
     })
   } else if (msg.method === 'tools/call' && msg.params?.name === 'preview') {
-    respond(msg.id, {
-      content: [{ type: 'text', text: output }],
-    })
+    respond(msg.id, response(output))
   } else if (msg.method === 'notifications/initialized') {
     // no response needed
   } else if (msg.id !== undefined) {

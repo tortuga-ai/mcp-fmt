@@ -172,10 +172,22 @@ bold('Total: 42')          // **Total: 42**
 italic('optional')         // _optional_
 ```
 
+### `response(text)`
+
+Wraps formatted text in the MCP content format required by all MCP tool handlers.
+
+```ts
+import { response, section, table } from 'mcp-fmt'
+
+server.tool('summary', {}, async () => {
+  return response(section('Sprint Summary', table(headers, rows, totals)))
+})
+```
+
 ## Full MCP Tool Example
 
 ```ts
-import { table, section, bold } from 'mcp-fmt'
+import { table, section, bold, response } from 'mcp-fmt'
 
 server.tool('summary', {}, async () => {
   const headers = ['Task', 'Owner', 'Status', 'Points']
@@ -186,18 +198,15 @@ server.tool('summary', {}, async () => {
   ]
   const totals = ['Total', '', '', '10']
 
-  return {
-    content: [{
-      type: 'text',
-      text: section(
-        'Sprint Summary',
-        'By Owner:',
-        table(headers, rows, totals),
-        '',
-        bold('Velocity: ') + '10 pts'
-      )
-    }]
-  }
+  return response(
+    section(
+      'Sprint Summary',
+      'By Owner:',
+      table(headers, rows, totals),
+      '',
+      bold('Velocity: ') + '10 pts'
+    )
+  )
 })
 ```
 
@@ -221,6 +230,7 @@ server.tool('summary', {}, async () => {
 | `header` | `(text, level?)` | H1–H3 markdown header (default: H2) |
 | `bold` | `(text)` | Bold text |
 | `italic` | `(text)` | Italic text |
+| `response` | `(text)` | Wraps text in MCP content format `{ content: [{ type: 'text', text }] }` |
 
 ## Previewing the output
 
