@@ -1,6 +1,6 @@
 import { table, list, nestedList, codeBlock, section, bold, italic, header, keyValue, statusBadge, priorityBadge } from '../src/index'
 
-console.log(header('chat-fmt Examples', 1))
+console.log(header('mcp-fmt Examples', 1))
 console.log()
 
 // --- table() with totalRow ---
@@ -70,7 +70,7 @@ console.log()
 // --- codeBlock() ---
 console.log(header('codeBlock()', 3))
 console.log(codeBlock(
-  `import { table, section } from 'chat-fmt'
+  `import { table, section } from 'mcp-fmt'
 
 return section('Summary', table(headers, rows, totals))`,
   'typescript'

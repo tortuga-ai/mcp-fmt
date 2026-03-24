@@ -1,16 +1,28 @@
 #!/usr/bin/env bun
 /**
- * mcp-fmt preview MCP server — stdio transport
+ * mcp-fmt preview MCP server — HTTP transport (Streamable HTTP)
  *
- * Add to .mcp.json (project) or Claude Code MCP settings:
+ * Add to Claude Code MCP settings (~/.claude/settings.json):
  * {
  *   "mcpServers": {
  *     "mcp-fmt-preview": {
- *       "command": "bun",
- *       "args": ["run", "/absolute/path/to/examples/preview-mcp.ts"]
+ *       "type": "http",
+ *       "url": "http://localhost:3456/mcp"
  *     }
  *   }
  * }
+ *
+ * Or for Cursor (.cursor/mcp.json):
+ * {
+ *   "mcpServers": {
+ *     "mcp-fmt-preview": {
+ *       "url": "http://localhost:3456/mcp"
+ *     }
+ *   }
+ * }
+ *
+ * Start the server:
+ *   bun run examples/preview-mcp-http.ts
  *
  * Then ask your AI: "call the preview tool"
  */
@@ -137,43 +149,60 @@ const output = [
   ),
 ].join('\n')
 
-// MCP stdio protocol
-const respond = (id: any, result: any) =>
-  process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id, result }) + '\n')
+const TOOLS = [{
+  name: 'preview',
+  description: `Show mcp-fmt formatted output examples. ${RENDER_HINT}`,
+  inputSchema: { type: 'object', properties: {} },
+}]
 
-const handleMessage = (msg: any) => {
+function handleRpc(msg: any): any {
   if (msg.method === 'initialize') {
-    respond(msg.id, {
+    return {
       protocolVersion: '2024-11-05',
       capabilities: { tools: {} },
-      serverInfo: { name: 'mcp-fmt-preview', version: '1.0.0' },
-    })
-  } else if (msg.method === 'tools/list') {
-    respond(msg.id, {
-      tools: [{
-        name: 'preview',
-        description: `Show mcp-fmt formatted output examples. ${RENDER_HINT}`,
-        inputSchema: { type: 'object', properties: {} },
-      }],
-    })
-  } else if (msg.method === 'tools/call' && msg.params?.name === 'preview') {
-    respond(msg.id, response(output))
-  } else if (msg.method === 'notifications/initialized') {
-    // no response needed
-  } else if (msg.id !== undefined) {
-    respond(msg.id, { content: [{ type: 'text', text: 'Unknown method' }] })
-  }
-}
-
-let buffer = ''
-process.stdin.setEncoding('utf8')
-process.stdin.on('data', (chunk) => {
-  buffer += chunk
-  const lines = buffer.split('\n')
-  buffer = lines.pop() ?? ''
-  for (const line of lines) {
-    if (line.trim()) {
-      try { handleMessage(JSON.parse(line)) } catch {}
+      serverInfo: { name: 'mcp-fmt-preview-http', version: '1.0.0' },
     }
   }
+  if (msg.method === 'tools/list') {
+    return { tools: TOOLS }
+  }
+  if (msg.method === 'tools/call' && msg.params?.name === 'preview') {
+    return response(output)
+  }
+  if (msg.method === 'notifications/initialized') {
+    return null // no response for notifications
+  }
+  return { content: [{ type: 'text', text: `Unknown method: ${msg.method}` }] }
+}
+
+const PORT = 3456
+
+Bun.serve({
+  port: PORT,
+  routes: {
+    '/mcp': {
+      POST: async (req) => {
+        const body = await req.json()
+        const msgs = Array.isArray(body) ? body : [body]
+        const responses = []
+
+        for (const msg of msgs) {
+          const result = handleRpc(msg)
+          if (result !== null && msg.id !== undefined) {
+            responses.push({ jsonrpc: '2.0', id: msg.id, result })
+          }
+        }
+
+        const payload = responses.length === 1 ? responses[0] : responses
+        return new Response(JSON.stringify(payload), {
+          headers: { 'Content-Type': 'application/json' },
+        })
+      },
+    },
+  },
+  fetch(req) {
+    return new Response('mcp-fmt preview HTTP MCP server\nPOST /mcp', { status: 200 })
+  },
 })
+
+console.log(`mcp-fmt preview HTTP MCP server running at http://localhost:${PORT}/mcp`)
